@@ -19,8 +19,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ## define targets
 
 add_library(lib STATIC
-  include/dummy.hpp
-  include/dummy.cpp
+  include/UARTdevice.hpp
+  include/UARTdevice.cpp
   )
 target_include_directories(lib PUBLIC include)
 
@@ -34,7 +34,7 @@ target_include_directories(lib PUBLIC include)
 # target_include_directories(test PRIVATE common)
 
 add_executable(jtaguart
-  src/device.cpp
+  src/main.cpp
   )
 
 

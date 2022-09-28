@@ -1,29 +1,14 @@
-
-#include "include/device.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <cstring>
 #include <fcntl.h>
-#include <string>
+#include <fstream>
+#include <iostream>
+#include <strings.h>
 #include <termios.h>
 #include <unistd.h>
 
-#include <iostream>
-
-class UARTDevice
-{
-  private:
-    struct termios config;
-    struct termios prev_config;
-
-  public:
-    int fd;
-    UARTDevice(std::string term, unsigned int baudrate);
-    ~UARTDevice();
-    int         send(const std::string data);
-    std::string receive(size_t num_bytes);
-};
+#include "UARTdevice.hpp"
 
 UARTDevice::UARTDevice(std::string term, unsigned int baudrate)
 {
@@ -82,12 +67,4 @@ std::string UARTDevice::receive(size_t num_bytes)
     }
     std::cout << "Read: '" << data << "'" << std::endl;
     return data;
-}
-
-int main()
-{
-    std::string serial_device = "/dev/pts/7";
-    UARTDevice  dev(serial_device, B115200);
-    dev.send("Hello World!");
-    dev.receive(3);
 }
