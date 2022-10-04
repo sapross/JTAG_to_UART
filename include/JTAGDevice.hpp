@@ -33,23 +33,24 @@ class JTAGDevice
     bool        tck_prev;
     size_t      bit_count;
     Adapter     adapter;
-    JTAG_STATES FSM;
-    JTAG_STATES fsm_next(bool tms);
+    JTAG_STATES state;
+    JTAG_STATES next_state(bool tms);
 
-  public:
     // Data register.
     std::vector<bool> dr;
     // Data register index
-    size_t dr_i;
+    std::vector<bool>::iterator dr_it;
     // Instruction register
     std::vector<bool> ir;
     // Instruction register index
-    size_t ir_i;
+    std::vector<bool>::iterator ir_it;
+    std::vector<bool>           output_buf;
 
+  public:
     JTAGDevice();
     ~JTAGDevice();
-    int proc_input(bool tck, bool tms, bool tdi);
-    int proc_output(bool tdo);
+    int         proc_input(bool tck, bool tms, bool tdi);
+    std::string encode_output();
 };
 
 #endif // JTAGDEVICE_H_

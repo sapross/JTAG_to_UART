@@ -21,6 +21,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library(lib STATIC
   include/UARTdevice.hpp
   include/UARTdevice.cpp
+  include/BitBangHandler.hpp
+  include/BitBangHandler.cpp
+  include/TCPServer.hpp
+  include/TCPServer.cpp
   )
 target_include_directories(lib PUBLIC include)
 

@@ -1,5 +1,5 @@
 #include "TCPServer.hpp"
-#include "ConnectionHandler.hpp"
+#include "BitBangHandler.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -62,89 +62,106 @@ void TCPServer::join()
 
 void TCPServer::thread_func()
 {
-    int sock_fd;
-    std::cout << "Listen on port " << PORT << std::endl;
-    if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    int sockfd;
+
+    std::cout << "Listen on: " << PORT << std::endl;
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        std::cerr << "socket failed. Error: " << errno << std::endl;
+        std::cerr << "socket() => -1, errno=" << errno << std::endl;
         return;
     }
 
-    int reuse_addr = 1;
-    if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(int)) == -1)
+    int reuseaddr = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) == -1)
     {
-        std::cerr << "setsockopt failed. Error: " << errno << std::endl;
-        close(sock_fd);
+        std::cerr << "setsockopt() => -1, errno=" << errno << std::endl;
+    }
+
+    struct sockaddr_in servaddr = {0, 0, 0, 0};
+    servaddr.sin_family         = AF_INET;
+    servaddr.sin_addr.s_addr    = INADDR_ANY;
+    servaddr.sin_port           = htons(PORT);
+
+    // binding to socket that will listen for new connections
+    if (bind(sockfd, (const struct sockaddr*)&servaddr, sizeof(servaddr)) == -1)
+    {
+        std::cerr << "bind() => -1, errno=" << errno << std::endl;
+        close(sockfd);
         return;
     }
 
-    struct sockaddr_in serv_addr = {0, 0, 0, 0};
-    serv_addr.sin_family         = AF_INET;
-    serv_addr.sin_addr.s_addr    = INADDR_ANY;
-    serv_addr.sin_port           = htons(PORT);
+    // started listening, 50 pending connections can wait in a queue
+    listen(sockfd, 50);
 
-    if (bind(sock_fd, (const struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
-    {
-        std::cerr << "bind failed. Error: " << errno << std::endl;
-        close(sock_fd);
-        return;
-    }
+    // monitored file descriptors - at start there is efd and just created sockfd. POLLIN means we wait for data to read
+    std::vector<struct pollfd> fds{{this->fd, POLLIN, 0}, {sockfd, POLLIN, 0}};
 
-    std::vector<struct pollfd> fds{{this->fd, POLLIN, 0}, {sock_fd, POLLIN, 0}};
-
-    std::unordered_map<int, ConnectionHandler> handlers;
+    std::unordered_map<int, BitBangHandler> handlers;
 
     while (true)
     {
-        const int TIMEOUT = 1000;
-        int       n       = poll(fds.data(), fds.size(), TIMEOUT);
+        const int TIMEOUT = 1000;                      // 1000 ms
+        int n = poll(fds.data(), fds.size(), TIMEOUT); // checking if there was any event on monitored file descriptors
         if (n == -1 && errno != ETIMEDOUT && errno != EINTR)
         {
-            std::cerr << "poll failed. Error: " << errno << std::endl;
+            std::cerr << "poll() => -1, errno=" << errno << std::endl;
             break;
         }
 
+        // n pending events
         if (n > 0)
         {
             if (fds[0].revents)
-            {
-                std::cout << "Server stopping" << std::endl;
+            { // handles server stop request (which is sent by TCPServer::stop())
+                std::cout << "Received stop request" << std::endl;
                 break;
             }
             else if (fds[1].revents)
             {
-                int client_fd = accept(sock_fd, NULL, NULL);
-                std::cout << "New connection" << std::endl;
-                if (client_fd != -1)
+                // New connection.
+                // Is there any other client connected already?
+                if (handlers.size() == 0)
                 {
-                    fds.push_back(pollfd{client_fd, POLLIN, 0});
+                    // accepting connection
+                    int clientfd = accept(sockfd, NULL, NULL);
+                    std::cout << "New connection" << std::endl;
+                    if (clientfd != -1)
+                    {
+                        // insert new pollfd to monitor
+                        fds.push_back(pollfd{clientfd, POLLIN, 0});
 
-                    handlers.emplace(client_fd, client_fd);
+                        // create ConnectionHandler object that will run in separate thread
+                        handlers.emplace(clientfd, clientfd);
+                    }
+                    else
+                    {
+                        std::cerr << "accept => -1, errno=" << errno << std::endl;
+                    }
                 }
-                else
-                {
-                    std::cerr << "accept failed. Error :" << errno << std::endl;
-                }
+                // clearing revents
                 fds[1].revents = 0;
             }
+
+            // iterating all pollfds to check if anyone disconnected
             for (auto it = fds.begin() + 2; it != fds.end();)
             {
                 char c;
                 if (it->revents && recv(it->fd, &c, 1, MSG_PEEK | MSG_DONTWAIT) == 0)
-                {
+                { // checks if disconnected or just fd readable
                     std::cout << "Client disconnected" << std::endl;
-                    close(it->fd);
-                    handlers.at(it->fd).terminate();
+                    close(it->fd);                   // closing socket
+                    handlers.at(it->fd).terminate(); // terminating ConnectionHandler thread
                     handlers.erase(it->fd);
                     it = fds.erase(it);
                 }
                 else
                 {
-                    it++;
+                    ++it;
                 }
             }
         }
     }
+
     // cleaning section after receiving stop request
     for (auto it = fds.begin() + 1; it != fds.end(); it++)
     {

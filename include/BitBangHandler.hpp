@@ -1,9 +1,10 @@
-#ifndef CONNECTIONHANDLER_H_
-#define CONNECTIONHANDLER_H_
+#ifndef BITBANGHANDLER_H_
+#define BITBANGHANDLER_H_
+#include "JTAGDevice.hpp"
 
 #include <thread>
 
-class ConnectionHandler
+class BitBangHandler
 {
   private:
     std::thread m_thread;
@@ -12,14 +13,17 @@ class ConnectionHandler
 
     std::string readMessage();
     void        sendMessage(const std::string& msg);
-
+    std::string (*msg_handler)(std::string);
     void stop();
 
+    JTAGDevice jtag;
+
   public:
-    explicit ConnectionHandler(int fd);
-    ~ConnectionHandler();
+    explicit BitBangHandler(int fd);
+    ~BitBangHandler();
 
     void terminate();
     void threadFunc();
 };
-#endif // CONNECTIONHANDLER_H_
+
+#endif // BITBANGHANDLER_H_
