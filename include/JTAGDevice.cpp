@@ -2,7 +2,7 @@
 #include "Adapter.hpp"
 
 #include <algorithm>
-JTAGDevice::JTAGDevice()
+JTAGDevice::JTAGDevice(Adapter& adapter): adapter(adapter)
 {
     this->state    = RUN_TEST_IDLE;
     this->tck_prev = false;
@@ -45,7 +45,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case RUN_TEST_IDLE: break;
         case SELECT_DR_SCAN: break;
         case CAPTURE_DR:
-            this->adapter.get_dr(this->ir, this->dr);
+            this->adapter.get_dr(this->dr);
             this->dr_it = this->dr.begin();
             break;
         case SHIFT_DR:
@@ -56,7 +56,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case EXIT1_DR: break;
         case PAUSE_DR: break;
         case EXIT2_DR: break;
-        case UPDATE_DR: adapter.exchange_dr(ir, dr); break;
+        case UPDATE_DR: adapter.exchange_dr(this->dr); break;
         case SELECT_IR_SCAN: break;
         case CAPTURE_IR:
             this->adapter.get_ir(this->ir);

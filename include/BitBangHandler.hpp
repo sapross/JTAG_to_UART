@@ -13,13 +13,12 @@ class BitBangHandler
 
     std::string readMessage();
     void        sendMessage(const std::string& msg);
-    std::string (*msg_handler)(std::string);
-    void stop();
+    void        stop();
 
-    JTAGDevice jtag;
+    JTAGDevice& jtag;
 
   public:
-    explicit BitBangHandler(int fd);
+    explicit BitBangHandler(int fd, JTAGDevice& jtag);
     ~BitBangHandler();
 
     void terminate();

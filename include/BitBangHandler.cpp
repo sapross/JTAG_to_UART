@@ -6,11 +6,8 @@
 #include <pthread.h>
 #include <sys/socket.h>
 
-BitBangHandler::BitBangHandler(int fd)
+BitBangHandler::BitBangHandler(int fd, JTAGDevice& jtag): fd(fd), jtag(jtag)
 {
-    this->fd          = fd;
-    this->msg_handler = msg_handler;
-
     assert(!this->m_thread.joinable());
 
     // creating thread that handles received messages

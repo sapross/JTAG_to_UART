@@ -32,7 +32,7 @@ class JTAGDevice
   private:
     bool        tck_prev;
     size_t      bit_count;
-    Adapter     adapter;
+    Adapter&    adapter;
     JTAG_STATES state;
     JTAG_STATES next_state(bool tms);
 
@@ -47,7 +47,7 @@ class JTAGDevice
     std::vector<bool>           output_buf;
 
   public:
-    JTAGDevice();
+    JTAGDevice(Adapter& adapter);
     ~JTAGDevice();
     int         proc_input(bool tck, bool tms, bool tdi);
     std::string encode_output();
