@@ -90,7 +90,5 @@ void BitBangHandler::threadFunc()
                 }
             }
         }
-        msg = this->msg_handler(msg);
-        this->sendMessage(msg);
     }
 }

@@ -81,16 +81,13 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
 std::string JTAGDevice::encode_output()
 {
 
-    std::string output(this->output_buf.size(), '0');
-    auto        it  = output.begin();
+    std::string str(this->output_buf.size(), '0');
+    auto        it  = str.begin();
     auto        beg = this->output_buf.begin();
     auto        end = this->output_buf.end();
-    std::for_each(beg,
-                  end,
-                  [&it](auto& a)
-                  {
-                      *it = (a ? '1' : '0');
-                      it++;
-                  });
-    return output;
+    for (size_t i = 0; i < output_buf.size(); i++)
+    {
+        str[i] = output_buf[i] ? '1' : '0';
+    };
+    return str;
 }
