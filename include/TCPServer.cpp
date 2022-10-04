@@ -14,7 +14,7 @@
 
 #define PORT 1234
 
-TCPServer::TCPServer()
+TCPServer::TCPServer(JTAGDevice& jtag): jtag(jtag)
 {
     this->fd = -1;
     this->start();
@@ -96,8 +96,8 @@ void TCPServer::thread_func()
     // monitored file descriptors - at start there is efd and just created sockfd. POLLIN means we wait for data to read
     std::vector<struct pollfd> fds{{this->fd, POLLIN, 0}, {sockfd, POLLIN, 0}};
 
-    std::unordered_map<int, BitBangHandler> handlers;
-
+    BitBangHandler* handler;
+    bool            handler_busy = false;
     while (true)
     {
         const int TIMEOUT = 1000;                      // 1000 ms
@@ -120,7 +120,7 @@ void TCPServer::thread_func()
             {
                 // New connection.
                 // Is there any other client connected already?
-                if (handlers.size() == 0)
+                if (!handler_busy)
                 {
                     // accepting connection
                     int clientfd = accept(sockfd, NULL, NULL);
@@ -131,7 +131,8 @@ void TCPServer::thread_func()
                         fds.push_back(pollfd{clientfd, POLLIN, 0});
 
                         // create ConnectionHandler object that will run in separate thread
-                        handlers.emplace(clientfd, clientfd);
+                        handler      = new BitBangHandler(clientfd, jtag);
+                        handler_busy = true;
                     }
                     else
                     {
@@ -149,10 +150,11 @@ void TCPServer::thread_func()
                 if (it->revents && recv(it->fd, &c, 1, MSG_PEEK | MSG_DONTWAIT) == 0)
                 { // checks if disconnected or just fd readable
                     std::cout << "Client disconnected" << std::endl;
-                    close(it->fd);                   // closing socket
-                    handlers.at(it->fd).terminate(); // terminating ConnectionHandler thread
-                    handlers.erase(it->fd);
-                    it = fds.erase(it);
+                    close(it->fd);        // closing socket
+                    handler->terminate(); // terminating ConnectionHandler thread
+                    delete handler;
+                    handler_busy = false;
+                    it           = fds.erase(it);
                 }
                 else
                 {
@@ -166,11 +168,10 @@ void TCPServer::thread_func()
     for (auto it = fds.begin() + 1; it != fds.end(); it++)
     {
         close(it->fd);
-        if (handlers.find(it->fd) != handlers.end())
-        {
-            handlers.at(it->fd).terminate();
-        }
     }
+
+    handler->terminate(); // terminating ConnectionHandler thread
+    delete handler;
 
     std::cout << "TCP server stopped" << std::endl;
 }
