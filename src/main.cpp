@@ -10,10 +10,14 @@
 int main(int argc, char* argv[])
 {
     std::string serial_device = "/dev/pts/7";
-    UARTDevice  uart(serial_device, B115200);
-    Adapter     adapter(uart);
-    JTAGDevice  jtag(adapter);
-    TCPServer   server(jtag);
+    if (argc > 2)
+    {
+        serial_device = argv[1];
+    }
+    UARTDevice uart(serial_device, B115200);
+    Adapter    adapter(uart);
+    JTAGDevice jtag(adapter);
+    TCPServer  server(jtag);
 
     server.join();
 

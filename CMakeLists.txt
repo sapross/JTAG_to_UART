@@ -32,14 +32,14 @@ add_library(lib STATIC
   )
 target_include_directories(lib PUBLIC include)
 
-# add_executable(test
-#   test/test-main.cpp
-#   test/test.cpp
-#   )
+add_executable(test
+  test/test-main.cpp
+  test/test.cpp
+  )
 
-# target_compile_features(test PRIVATE cxx_std_20)
-# target_link_libraries(test PUBLIC lib Catch2)
-# target_include_directories(test PRIVATE common)
+target_compile_features(test PRIVATE cxx_std_20)
+target_link_libraries(test PUBLIC lib Catch2)
+target_include_directories(test PRIVATE common)
 
 add_executable(jtaguart
   src/main.cpp

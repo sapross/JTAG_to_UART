@@ -1,35 +1,54 @@
 #define CATCH_CONFIG_FAST_COMPILE
-#include "logrange_generator.hpp"
 #include <algorithm>
 #include <catch2/catch.hpp>
 #include <iomanip>
 #include <numeric>
+#include <pty.h>
 #include <random>
 #include <sstream>
+#include <termios.h>
 
-TEST_CASE("Example")
+#include "Adapter.hpp"
+#include "UARTdevice.hpp"
+
+TEST_CASE("UART Test")
 {
     // Test parameters
-    size_t N = GENERATE(logRange(2, 1ull << 5, 2));
-    // Logging of parameters
-    CAPTURE(N);
-
     std::default_random_engine         generator;
-    std::uniform_int_distribution<int> distribution(1, 10);
+    std::uniform_int_distribution<int> distribution(32, 126);
     auto                               randnum = std::bind(distribution, generator);
 
-    int init  = 2;
-    int ident = 0;
+    int            master, slave;
+    char           buf[256];
+    struct termios tty;
+    auto           serint = openpty(&master, &slave, buf, &tty, nullptr);
 
-    std::vector<int> data(N, 1);
-    std::generate(data.begin(), data.end(), randnum);
-
-    std::vector<int> reference(N, 0);
+    UARTDevice uart(buf, 115200);
 
     // Tests
-    SECTION("Example Section")
+    SECTION("UART send test.")
     {
-        std::vector<int> result(N, 0);
+        std::string reference(50, 0);
+        std::transform(
+            reference.begin(), reference.end(), reference.begin(), [&randnum](auto a) { return (char)(randnum()); });
+        uart.send(reference);
+        char result[51];
+
+        while (read(master, result, 50) < 0)
+        {
+            ;
+        }
+        REQUIRE_THAT(result, Catch::Matchers::Equals(reference));
+    }
+
+    SECTION("UART read test.")
+    {
+        std::string reference(50, 0);
+        std::transform(
+            reference.begin(), reference.end(), reference.begin(), [&randnum](auto a) { return (char)(randnum()); });
+
+        write(master, reference.c_str(), 50);
+        std::string result = uart.receive(50);
         REQUIRE_THAT(result, Catch::Matchers::Equals(reference));
     }
 }
