@@ -129,12 +129,16 @@ int Adapter::exchange_dr(std::vector<bool>& dr)
     {
         return -1;
     }
-    size_t      num_bytes = (temp.size() + 7) / 8;
-    std::string msg(3, 0);
-    msg[0] = uart_tap::HEADER;
-    msg[1] = uart_tap::WRITE;
-    msg[2] = num_bytes;
-    msg += bitvector_to_string(dr);
+    if (dr.size() > 0)
+    {
+        size_t      num_bytes = (temp.size() + 7) / 8;
+        std::string msg(3, 0);
+        msg[0] = uart_tap::HEADER;
+        msg[1] = uart_tap::WRITE;
+        msg[2] = num_bytes;
+        msg += bitvector_to_string(dr);
 
-    return this->uart.send(msg);
+        return this->uart.send(msg);
+    }
+    return 0;
 }

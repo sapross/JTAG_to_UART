@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
-#define PORT 1234
+#define PORT 4567
 
 TCPServer::TCPServer(JTAGDevice& jtag): jtag(jtag)
 {
@@ -76,7 +76,6 @@ void TCPServer::thread_func()
     {
         std::cerr << "setsockopt() => -1, errno=" << errno << std::endl;
     }
-
     struct sockaddr_in servaddr = {0, 0, 0, 0};
     servaddr.sin_family         = AF_INET;
     servaddr.sin_addr.s_addr    = INADDR_ANY;

@@ -35,15 +35,17 @@ UARTDevice::~UARTDevice()
 
 int UARTDevice::send(const std::string data)
 {
-
-    std::cout << "Sending: '" << data << "'" << std::endl;
-    if (not write(fd, data.c_str(), data.length()))
+    if (data.size() > 0)
     {
-        // writing failed
-        std::cout << "Failure!" << std::endl;
-        return 1;
+        if (not write(fd, data.c_str(), data.length()))
+        {
+            // writing failed
+            std::cout << "Failure!" << std::endl;
+            return 1;
+        }
+        tcdrain(fd);
+        std::cout << "Sending: '" << data << "'" << std::endl;
     }
-    tcdrain(fd);
     return 0;
 }
 

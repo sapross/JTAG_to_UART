@@ -58,17 +58,18 @@ void BitBangHandler::threadFunc()
         std::cout << "R: " << msg << std::endl;
         for (auto it = msg.begin(); it != msg.end(); it++)
         {
-            if (*it == 'R')
+            auto placeholder = *it;
+            if (placeholder == 'R')
             {
                 this->sendMessage(this->jtag.encode_output());
             }
-            else if (*it == 'Q')
+            else if (placeholder == 'Q')
             {
                 this->stop();
             }
             else
             {
-                switch (*it)
+                switch (placeholder)
                 {
                 case 'B': break;
                 case 'b': break;

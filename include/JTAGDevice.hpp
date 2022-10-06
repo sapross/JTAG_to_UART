@@ -39,12 +39,13 @@ class JTAGDevice
     // Data register.
     std::vector<bool> dr;
     // Data register index
-    std::vector<bool>::iterator dr_it;
+    size_t dr_index;
     // Instruction register
     std::vector<bool> ir;
     // Instruction register index
-    std::vector<bool>::iterator ir_it;
-    std::vector<bool>           output_buf;
+    size_t ir_index;
+
+    std::vector<bool> output_buf;
 
   public:
     JTAGDevice(Adapter& adapter);
