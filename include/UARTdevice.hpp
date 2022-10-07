@@ -4,7 +4,14 @@
 #include <string>
 #include <termios.h>
 
-class UARTDevice
+class SerialDevice
+{
+  public:
+    virtual int         send(std::string data) { return 0; };
+    virtual std::string receive(size_t num_bytes) { return std::string(); };
+};
+
+class UARTDevice: public SerialDevice
 {
   private:
     struct termios config;
@@ -14,7 +21,7 @@ class UARTDevice
     int fd;
     UARTDevice(std::string term, unsigned int baudrate);
     ~UARTDevice();
-    int         send(const std::string data);
+    int         send(std::string data);
     std::string receive(size_t num_bytes);
 };
 

@@ -12,28 +12,39 @@
 
 UARTDevice::UARTDevice(std::string term, unsigned int baudrate)
 {
-    fd = open(term.c_str(), O_RDWR | O_NOCTTY);
-    if (not fd)
+    if (term.size() > 0)
     {
-        std::cout << "Notty" << std::endl;
-        exit(1);
+
+        fd = open(term.c_str(), O_RDWR | O_NOCTTY);
+        if (not fd)
+        {
+            std::cout << "Notty" << std::endl;
+            exit(1);
+        }
+        tcgetattr(fd, &(prev_config));
+        bzero(&config, sizeof(config));
+        cfmakeraw(&config);
+        config.c_cflag |= baudrate;
+        config.c_cc[VMIN] = 1;
+        tcflush(fd, TCIOFLUSH);
+        tcsetattr(fd, TCSANOW, &config);
     }
-    tcgetattr(fd, &(prev_config));
-    bzero(&config, sizeof(config));
-    cfmakeraw(&config);
-    config.c_cflag |= baudrate;
-    config.c_cc[VMIN] = 1;
-    tcflush(fd, TCIOFLUSH);
-    tcsetattr(fd, TCSANOW, &config);
+    else
+    {
+        fd = -1;
+    }
 }
 
 UARTDevice::~UARTDevice()
 {
-    tcsetattr(fd, TCSANOW, &prev_config);
-    close(fd);
+    if (fd > 0)
+    {
+        tcsetattr(fd, TCSANOW, &prev_config);
+        close(fd);
+    }
 }
 
-int UARTDevice::send(const std::string data)
+int UARTDevice::send(std::string data)
 {
     if (data.size() > 0)
     {
