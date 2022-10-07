@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <catch2/catch.hpp>
 #include <iomanip>
+#include <iostream>
 #include <numeric>
 #include <pty.h>
 #include <random>
@@ -56,12 +57,28 @@ class DummyUART: public SerialDevice
 {
   public:
     std::string msg;
+    std::string response;
     int         send(std::string data)
     {
+        // std::cout << "S(" << data.size() << "): ";
+        // for (size_t i = 0; i < data.size(); i++)
+        // {
+        //     std::cout << (uint16_t)(data[i]) << " ";
+        // }
+        // std::cout << std::endl;
         this->msg = data;
         return 0;
     }
-    std::string receive(size_t num_bytes) { return msg; }
+    std::string receive(size_t num_bytes)
+    {
+        // std::cout << "R(" << this->response.size() << "): ";
+        // for (size_t i = 0; i < this->response.size(); i++)
+        // {
+        //     std::cout << (uint16_t)(this->response[i]) << " ";
+        // }
+        // std::cout << std::endl;
+        return response;
+    }
 };
 
 TEST_CASE("Adapter Tests")
@@ -104,29 +121,31 @@ TEST_CASE("Adapter Tests")
         REQUIRE_THAT(ref, Catch::Matchers::Equals(res));
     }
 
-    // SECTION("Adapter dr manip")
-    // {
+    SECTION("Adapter dr manip")
+    {
 
-    //     adapter.address                = uart_tap::DEFAULT_ADDR;
-    //     std::vector<uint8_t> reference = {1, 128, 0, 0};
+        std::vector<bool> dmi(uart_tap::DMI_LENGTH, false);
+        std::transform(dmi.begin(), dmi.end(), dmi.begin(), [&randnum](auto a) { return randnum() < 127; });
+        uart.response = bitvector_to_string(dmi);
 
-    //     std::vector<bool> ref(uart_tap::IDCODE_LENGTH, false);
-    //     std::transform(ref.begin(), ref.end(), ref.begin(), [&randnum](auto a) { return randnum() < 127; });
+        std::vector<bool> dr;
 
-    //     std::vector<bool> res(uart_tap::IDCODE_LENGTH, false);
-    //     adapter.get_dr(res);
+        adapter.address = uart_tap::DMI_ADDR;
+        adapter.get_dr(dr);
+        // SOH,CMD_READ+DMI_ADDR,num_bytes,0
+        std::string ref_msg = "\x01\x31\x06";
 
-    //     std::vector<uint8_t> num_res(4, 0);
-    //     for (size_t i = 0; i < 4; i++)
-    //     {
-    //         num_res[i] = (uint8_t)(uart.msg[i]);
-    //     }
+        REQUIRE_THAT(uart.msg, Catch::Matchers::Equals(ref_msg));
+        REQUIRE_THAT(dr, Catch::Matchers::Equals(dmi));
 
-    //     REQUIRE_THAT(num_res, Catch::Matchers::Equals(res));
-    //     REQUIRE_THAT(ref, Catch::Matchers::Equals(uint_to_bitvector(adapter.address, uart_tap::IR_LENGTH)));
+        std::vector<bool> new_dmi(uart_tap::DMI_LENGTH, false);
+        std::transform(new_dmi.begin(), new_dmi.end(), new_dmi.begin(), [&randnum](auto a) { return randnum() < 127; });
+        ref_msg = "\x01\x51\x06" + bitvector_to_string(new_dmi);
 
-    //     adapter.get_ir(res);
+        adapter.exchange_dr(new_dmi);
+        REQUIRE_THAT(new_dmi, Catch::Matchers::Equals(dmi));
 
-    //     REQUIRE_THAT(ref, Catch::Matchers::Equals(res));
-    // }
+        REQUIRE_THAT(uart.msg, Catch::Matchers::Equals(ref_msg));
+        REQUIRE_THAT(dr, Catch::Matchers::Equals(dmi));
+    }
 }

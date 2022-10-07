@@ -1,5 +1,7 @@
 #include "Adapter.hpp"
 
+#include <iostream>
+
 std::vector<bool> uint_to_bitvector(uint8_t value, size_t len)
 {
     std::vector<bool> bitvector(len, false);
@@ -35,11 +37,11 @@ std::vector<bool> string_to_bitvector(std::string str, size_t len)
 
 std::string bitvector_to_string(std::vector<bool> bitvector)
 {
-    std::string str((bitvector.size() + 7 / 8), 0);
+    std::string str((bitvector.size() + 7) / 8, 0);
     for (size_t i = 0; i < bitvector.size(); i++)
     {
         // Convert address to bool vector.
-        str[i / 8] = (1 << i % 8) * bitvector[i];
+        str[i / 8] += (1 << i % 8) * bitvector[i];
     }
     return str;
 }
@@ -72,7 +74,7 @@ int Adapter::get_dr(std::vector<bool>& dr)
 
     std::string msg(3, 0);
     msg[0] = uart_tap::HEADER;
-    msg[1] = uart_tap::READ;
+    msg[1] = uart_tap::READ + this->address;
 
     size_t num_bits;
     switch (this->address)
@@ -86,9 +88,11 @@ int Adapter::get_dr(std::vector<bool>& dr)
         break;
     }
     size_t num_bytes = (num_bits + 7) / 8;
-    msg[3]           = num_bytes;
-    if (uart.send(msg))
+    msg[2]           = num_bytes;
+    // std::cout << "BitsBytes: " << num_bits << " " << num_bytes << std::endl;
+    if (uart.send(msg) >= 0)
     {
+
         std::string response = uart.receive(num_bytes);
         if (response.size() > 0)
         {
@@ -110,10 +114,10 @@ int Adapter::exchange_dr(std::vector<bool>& dr)
         size_t      num_bytes = (temp.size() + 7) / 8;
         std::string msg(3, 0);
         msg[0] = uart_tap::HEADER;
-        msg[1] = uart_tap::WRITE;
+        msg[1] = uart_tap::WRITE + this->address;
         msg[2] = num_bytes;
         msg += bitvector_to_string(dr);
-
+        dr = temp;
         return this->uart.send(msg);
     }
     return 0;
