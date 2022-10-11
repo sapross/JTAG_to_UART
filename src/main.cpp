@@ -10,7 +10,7 @@
 int main(int argc, char* argv[])
 {
     std::string serial_device = "/dev/pts/7";
-    if (argc > 2)
+    if (argc > 1)
     {
         serial_device = argv[1];
     }
