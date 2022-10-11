@@ -5,10 +5,10 @@
 #include <iostream>
 JTAGDevice::JTAGDevice(Adapter& adapter): adapter(adapter)
 {
-    this->state      = RUN_TEST_IDLE;
-    this->tck_prev   = false;
-    this->ir         = std::vector<bool>(false, 5);
-    this->output_buf = std::vector<bool>();
+    this->state    = RUN_TEST_IDLE;
+    this->tck_prev = false;
+    this->ir       = std::vector<bool>(false, 5);
+    this->output   = 0;
 }
 JTAGDevice::~JTAGDevice() { ; }
 
@@ -37,9 +37,10 @@ JTAG_STATES JTAGDevice::next_state(bool tms)
 }
 int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
 {
-
     if (this->tck_prev == 0 and tck == 1)
     {
+        std::cout << "tck: posedge "
+                  << " tms: " << tms << " tdi: " << tdi << std::endl;
         // Rising edge
         this->state = this->next_state(tms);
         switch (this->state)
@@ -55,7 +56,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
             if (this->dr.size() > 0)
             {
 
-                this->output_buf.push_back(this->dr[this->dr_index]);
+                this->output             = this->dr[this->dr_index] ? '1' : '0';
                 this->dr[this->dr_index] = tdi;
                 this->dr_index           = (this->dr_index + 1) % this->dr.size();
             }
@@ -63,7 +64,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case EXIT1_DR: break;
         case PAUSE_DR: break;
         case EXIT2_DR: break;
-        case UPDATE_DR: adapter.exchange_dr(this->dr); break;
+        case UPDATE_DR: this->adapter.exchange_dr(this->dr); break;
         case SELECT_IR_SCAN: break;
         case CAPTURE_IR:
             this->adapter.get_ir(this->ir);
@@ -71,38 +72,16 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
             break;
         case SHIFT_IR:
             break;
-            for (auto it = this->output_buf.begin(); it != this->output_buf.end(); it++)
-            {
-                std::cout << *it;
-            }
-            std::cout << std::endl;
-            this->output_buf.push_back(this->ir[this->ir_index]);
-            for (auto it = this->output_buf.begin(); it != this->output_buf.end(); it++)
-            {
-                std::cout << *it;
-            }
-            std::cout << std::endl;
+            this->output             = this->ir[this->ir_index] ? '1' : '0';
             this->ir[this->ir_index] = tdi;
             this->ir_index           = (this->ir_index + 1) % this->ir.size();
         case EXIT1_IR: break;
         case PAUSE_IR: break;
         case EXIT2_IR: break;
-        case UPDATE_IR: adapter.exchange_ir(ir); break;
+        case UPDATE_IR: this->adapter.exchange_ir(ir); break;
         }
     }
 
     this->tck_prev = tck;
     return 0;
-}
-
-std::string JTAGDevice::encode_output()
-{
-
-    std::string str(this->output_buf.size(), '0');
-    for (size_t i = 0; i < output_buf.size(); i++)
-    {
-        str[i] = output_buf[i] ? '1' : '0';
-    };
-    std::cout << str << std::endl;
-    return str;
 }

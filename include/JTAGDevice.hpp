@@ -45,9 +45,8 @@ class JTAGDevice
     // Instruction register index
     size_t ir_index;
 
-    std::vector<bool> output_buf;
-
   public:
+    uint8_t output;
     JTAGDevice(Adapter& adapter);
     ~JTAGDevice();
     int         proc_input(bool tck, bool tms, bool tdi);

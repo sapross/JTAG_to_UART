@@ -55,7 +55,12 @@ int UARTDevice::send(std::string data)
             return 1;
         }
         tcdrain(fd);
-        std::cout << "Sending: '" << data << "'" << std::endl;
+        std::cout << "UART S: '";
+        for (size_t i = 0; i < data.size(); i++)
+        {
+            std::cout << std::hex << +data[i] << ",";
+        }
+        std ::cout << "'" << std::endl;
     }
     return 0;
 }
@@ -78,6 +83,11 @@ std::string UARTDevice::receive(size_t num_bytes)
             break;
         }
     }
-    std::cout << "Read: '" << data << "'" << std::endl;
+    std::cout << "UART R: '";
+    for (size_t i = 0; i < data.size(); i++)
+    {
+        std::cout << std::hex << +data[i] << ",";
+    }
+    std ::cout << "'" << std::endl;
     return data;
 }

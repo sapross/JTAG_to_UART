@@ -48,6 +48,18 @@ void BitBangHandler::sendMessage(const std::string& msg)
     }
 }
 
+void BitBangHandler::sendMessage(const uint8_t msg)
+{
+    char buf[2];
+    buf[0] = msg;
+    buf[1] = 0;
+    int n  = send(this->fd, buf, 1, 0);
+    if (n != 1)
+    {
+        std::cout << "Error while sending message, message: " << std::hex << +msg << " bytes sent: " << std::endl;
+    }
+}
+
 void BitBangHandler::terminate() { this->m_terminate = true; }
 
 void BitBangHandler::threadFunc()
@@ -58,18 +70,18 @@ void BitBangHandler::threadFunc()
         std::cout << "R: " << msg << std::endl;
         for (auto it = msg.begin(); it != msg.end(); it++)
         {
-            auto placeholder = *it;
-            if (placeholder == 'R')
+            auto symbol = *it;
+            if (symbol == 'R')
             {
-                this->sendMessage(this->jtag.encode_output());
+                this->sendMessage(this->jtag.output);
             }
-            else if (placeholder == 'Q')
+            else if (symbol == 'Q')
             {
                 this->stop();
             }
             else
             {
-                switch (placeholder)
+                switch (symbol)
                 {
                 case 'B': break;
                 case 'b': break;
