@@ -4,6 +4,7 @@
 #include <string>
 #include <termios.h>
 
+unsigned int get_baudrate(int bd);
 class SerialDevice
 {
   public:
@@ -19,7 +20,7 @@ class UARTDevice: public SerialDevice
 
   public:
     int fd;
-    UARTDevice(std::string term, unsigned int baudrate);
+    UARTDevice(std::string term, int baudrate);
     ~UARTDevice();
     int         send(std::string data);
     std::string receive(size_t num_bytes);

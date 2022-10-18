@@ -10,7 +10,80 @@
 
 #include "UARTdevice.hpp"
 
-UARTDevice::UARTDevice(std::string term, unsigned int baudrate)
+unsigned int get_baudrate(int bd)
+{
+    if (bd == 300)
+    {
+        return B300;
+    }
+    if (bd == 600)
+    {
+        return B600;
+    }
+    if (bd == 1200)
+    {
+        return B1200;
+    }
+    if (bd == 2400)
+    {
+        return B2400;
+    }
+    if (bd == 4800)
+    {
+        return B4800;
+    }
+    if (bd == 9600)
+    {
+        return B9600;
+    }
+    if (bd == 19200)
+    {
+        return B19200;
+    }
+    if (bd == 38400)
+    {
+        return B38400;
+    }
+    if (bd == 57600)
+    {
+        return B57600;
+    }
+    if (bd == 115200)
+    {
+        return B115200;
+    }
+    if (bd == 230400)
+    {
+        return B230400;
+    }
+    if (bd == 460800)
+    {
+        return B460800;
+    }
+    if (bd == 576000)
+    {
+        return B57600;
+    }
+    if (bd == 921600)
+    {
+        return B921600;
+    }
+    if (bd == 1000000)
+    {
+        return B1000000;
+    }
+    if (bd == 2000000)
+    {
+        return B2000000;
+    }
+    if (bd == 3000000)
+    {
+        return B3000000;
+    }
+    return 0;
+}
+
+UARTDevice::UARTDevice(std::string term, int baudrate)
 {
     if (term.size() > 0)
     {
@@ -24,8 +97,13 @@ UARTDevice::UARTDevice(std::string term, unsigned int baudrate)
         tcgetattr(fd, &(prev_config));
         bzero(&config, sizeof(config));
         cfmakeraw(&config);
-        config.c_cflag |= baudrate;
-        config.c_cc[VMIN] = 1;
+        unsigned int bdcode = get_baudrate(baudrate);
+
+        config.c_cflag |= bdcode;
+        // Receive will terminate if either the desired number of characters is
+        // received or a timeout of VTIME*0.1s is reached,
+        config.c_cc[VMIN]  = 0;
+        config.c_cc[VTIME] = 2;
         tcflush(fd, TCIOFLUSH);
         tcsetattr(fd, TCSANOW, &config);
     }
