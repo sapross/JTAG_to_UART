@@ -90,17 +90,23 @@ int Adapter::get_dr(std::vector<bool>& dr)
     size_t num_bytes = (num_bits + 7) / 8;
     msg[2]           = num_bytes;
     // std::cout << "BitsBytes: " << num_bits << " " << num_bytes << std::endl;
-    if (uart.send(msg) >= 0)
+    std::string response;
+    size_t      num_attempts = 0;
+    while (response.size() != num_bytes)
     {
-
-        std::string response = uart.receive(num_bytes);
-        if (response.size() > 0)
+        if (num_attempts < 3)
         {
-            dr = string_to_bitvector(response, num_bits);
-            return num_bits;
+
+            uart.send(msg);
+            response = uart.receive(num_bytes);
+        }
+        else
+        {
+            return -1;
         }
     }
-    return -1;
+    dr = string_to_bitvector(response, num_bits);
+    return num_bits;
 }
 int Adapter::exchange_dr(std::vector<bool>& dr)
 {
