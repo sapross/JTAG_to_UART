@@ -149,8 +149,8 @@ void TCPServer::thread_func()
                 if (it->revents && recv(it->fd, &c, 1, MSG_PEEK | MSG_DONTWAIT) == 0)
                 { // checks if disconnected or just fd readable
                     std::cout << "Client disconnected" << std::endl;
-                    close(it->fd);        // closing socket
-                    handler->terminate(); // terminating ConnectionHandler thread
+                    close(it->fd); // closing socket
+                    handler->stop();
                     delete handler;
                     handler_busy = false;
                     it           = fds.erase(it);

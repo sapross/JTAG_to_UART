@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     {
         serial_device = argv[1];
     }
-    UARTDevice uart(serial_device, B115200);
+    UARTDevice uart(serial_device, B115200); // B3000000);
     Adapter    adapter(uart);
     JTAGDevice jtag(adapter);
     TCPServer  server(jtag);

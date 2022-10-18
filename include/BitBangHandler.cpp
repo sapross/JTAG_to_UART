@@ -77,7 +77,7 @@ void BitBangHandler::threadFunc()
             }
             else if (symbol == 'Q')
             {
-                this->stop();
+                this->terminate();
             }
             else
             {

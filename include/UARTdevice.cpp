@@ -69,11 +69,13 @@ std::string UARTDevice::receive(size_t num_bytes)
 {
     char        buf;
     std::string data;
+    std::cout << "UART R: '";
     for (size_t total = 0; total < num_bytes;)
     {
         size_t result = read(fd, &buf, 1);
         if (result)
         {
+            std::cout << std::hex << +buf << ",";
             data.push_back(buf);
             total++;
         }
@@ -82,11 +84,6 @@ std::string UARTDevice::receive(size_t num_bytes)
             std::cout << "Read error!" << std::endl;
             break;
         }
-    }
-    std::cout << "UART R: '";
-    for (size_t i = 0; i < data.size(); i++)
-    {
-        std::cout << std::hex << +data[i] << ",";
     }
     std ::cout << "'" << std::endl;
     return data;

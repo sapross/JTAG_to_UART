@@ -14,7 +14,6 @@ class BitBangHandler
     std::string readMessage();
     void        sendMessage(const std::string& msg);
     void        sendMessage(const uint8_t msg);
-    void        stop();
 
     JTAGDevice& jtag;
 
@@ -22,6 +21,7 @@ class BitBangHandler
     explicit BitBangHandler(int fd, JTAGDevice& jtag);
     ~BitBangHandler();
 
+    void stop();
     void terminate();
     void threadFunc();
 };
