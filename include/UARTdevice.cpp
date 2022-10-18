@@ -98,12 +98,11 @@ UARTDevice::UARTDevice(std::string term, int baudrate)
         bzero(&config, sizeof(config));
         cfmakeraw(&config);
         unsigned int bdcode = get_baudrate(baudrate);
-
         config.c_cflag |= bdcode;
         // Receive will terminate if either the desired number of characters is
         // received or a timeout of VTIME*0.1s is reached,
         config.c_cc[VMIN]  = 0;
-        config.c_cc[VTIME] = 2;
+        config.c_cc[VTIME] = 1;
         tcflush(fd, TCIOFLUSH);
         tcsetattr(fd, TCSANOW, &config);
     }
@@ -129,16 +128,16 @@ int UARTDevice::send(std::string data)
         if (not write(fd, data.c_str(), data.length()))
         {
             // writing failed
-            std::cout << "Failure!" << std::endl;
+            std::cout << "Write error!" << std::endl;
             return 1;
         }
         tcdrain(fd);
-        std::cout << "UART S: '";
-        for (size_t i = 0; i < data.size(); i++)
-        {
-            std::cout << std::hex << +data[i] << ",";
-        }
-        std ::cout << "'" << std::endl;
+        // std::cout << "UART S: '";
+        // for (size_t i = 0; i < data.size(); i++)
+        // {
+        //     std::cout << std::hex << +data[i] << ",";
+        // }
+        // std ::cout << "'" << std::endl;
     }
     return 0;
 }
@@ -147,13 +146,13 @@ std::string UARTDevice::receive(size_t num_bytes)
 {
     char        buf;
     std::string data;
-    std::cout << "UART R: '";
+    // std::cout << "UART R: '";
     for (size_t total = 0; total < num_bytes;)
     {
         size_t result = read(fd, &buf, 1);
         if (result)
         {
-            std::cout << std::hex << +buf << ",";
+            // std::cout << std::hex << +buf << ",";
             data.push_back(buf);
             total++;
         }
@@ -163,6 +162,6 @@ std::string UARTDevice::receive(size_t num_bytes)
             break;
         }
     }
-    std ::cout << "'" << std::endl;
+    // std ::cout << "'" << std::endl;
     return data;
 }

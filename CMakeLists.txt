@@ -6,7 +6,7 @@ include(FetchContent)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG       v2.13.7
+  GIT_TAG       v3.0.1
   )
 FetchContent_MakeAvailable(Catch2)
 
@@ -38,7 +38,7 @@ add_executable(test
   )
 
 target_compile_features(test PRIVATE cxx_std_20)
-target_link_libraries(test PUBLIC lib Catch2)
+target_link_libraries(test PUBLIC lib PRIVATE Catch2::Catch2WithMain)
 target_include_directories(test PRIVATE common)
 
 add_executable(jtaguart
@@ -49,6 +49,16 @@ add_executable(jtaguart
 target_compile_features(jtaguart PRIVATE cxx_std_20)
 target_link_libraries(jtaguart PUBLIC lib)
 target_include_directories(jtaguart PRIVATE common)
+
+
+add_executable(hw_test
+  test/hw_test-main.cpp
+  test/hw_test.cpp
+  )
+
+target_compile_features(hw_test PRIVATE cxx_std_20)
+target_link_libraries(hw_test PUBLIC lib PRIVATE Catch2::Catch2)
+target_include_directories(hw_test PRIVATE common)
 
 
 # define target linkage
