@@ -12,6 +12,7 @@
 
 #include "UARTdevice.hpp"
 #include "hw_test.hpp"
+#include <numeric>
 
 TEST_CASE("UART Echo Test")
 {
@@ -31,33 +32,50 @@ TEST_CASE("UART Echo Test")
     std::string ref(sequence_length, 0);
     std::string res(sequence_length, 0);
 
-    unsigned int hits = 0, misses = 0, faults = 0;
+    unsigned int correct_seq = 0, faulty_seq = 0, incomplete_seq = 0;
+    float        missing_char = 0.0, faulty_char = 0.0;
 
     for (size_t i = 0; i < num_seqences; i++)
     {
         std::transform(ref.begin(), ref.end(), ref.begin(), randnum);
         uart.send(ref);
         res = uart.receive(sequence_length);
+
         if (res.size() == ref.size())
         {
-            if (std::equal(ref.begin(), ref.end(), res.begin(), res.end()))
+            float num_faults = 0.0;
+            bool  faulty     = false;
+            for (size_t j = 0; j < sequence_length; j++)
             {
-                hits++;
+                if (ref[j] != res[j])
+                {
+                    num_faults += 1.0;
+                    faulty = true;
+                }
+            }
+            if (!faulty)
+            {
+                correct_seq++;
             }
             else
             {
-                faults++;
+                faulty_char += num_faults / (float)(ref.size());
+                faulty_seq++;
             }
         }
         else
         {
             // std::cout << "res.size(): " << res.size() << std::endl;
-            misses++;
+            missing_char += (float)(res.size()) / (float)(ref.size());
+            incomplete_seq++;
         }
     }
 
-    CAPTURE(misses);
-    CAPTURE(faults);
-    CAPTURE(hits);
-    REQUIRE(hits == num_seqences);
+    CAPTURE(correct_seq);
+    CAPTURE(incomplete_seq);
+    CAPTURE(faulty_seq);
+    CAPTURE(missing_char);
+    CAPTURE(faulty_char);
+
+    REQUIRE(correct_seq == num_seqences);
 }

@@ -128,7 +128,7 @@ int UARTDevice::send(std::string data)
         if (not write(fd, data.c_str(), data.length()))
         {
             // writing failed
-            std::cout << "Write error!" << std::endl;
+            // std::cout << "Write error!" << std::endl;
             return 1;
         }
         tcdrain(fd);
@@ -158,7 +158,7 @@ std::string UARTDevice::receive(size_t num_bytes)
         }
         else
         {
-            std::cout << "Read error!" << std::endl;
+            // std::cout << "Read error!" << std::endl;
             break;
         }
     }
