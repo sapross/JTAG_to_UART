@@ -60,19 +60,9 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
             break;
         case SHIFT_DR:
             // std::cout << "JTAG: Shift DR" << std::endl;
-            if (this->dr.size() > 0)
-            {
-                if (this->dr_index == this->dr.size())
-                {
-                    // We completed shifting one full register but want to shift in more data.
-                    // Exchange dr to update TAP and get new contents.
-                    this->adapter.exchange_dr(this->dr);
-                    this->dr_index = 0;
-                }
-                this->output             = this->dr[this->dr_index] ? '1' : '0';
-                this->dr[this->dr_index] = tdi;
-                this->dr_index++;
-            }
+            this->output             = this->dr[this->dr_index] ? '1' : '0';
+            this->dr[this->dr_index] = tdi;
+            this->dr_index           = (this->dr_index + 1) % this->dr.size();
             break;
         case EXIT1_DR: // std::cout << "JTAG: Exit1 DR" << std::endl;
             break;
@@ -93,16 +83,9 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
             break;
         case SHIFT_IR:
             // std::cout << "JTAG: Shift IR" << std::endl;
-            if (this->ir_index == this->ir.size())
-            {
-                // We completed shifting one full register but want to shift in more data.
-                // Exchange ir to update Adapter address and get new contents.
-                this->adapter.exchange_ir(this->ir);
-                this->ir_index = 0;
-            }
             this->output             = this->ir[this->ir_index] ? '1' : '0';
             this->ir[this->ir_index] = tdi;
-            this->ir_index++;
+            this->ir_index           = (this->ir_index + 1) % this->ir.size();
             break;
         case EXIT1_IR: // std::cout << "JTAG: Exit1 IR" << std::endl;
             break;
