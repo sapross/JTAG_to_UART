@@ -45,6 +45,13 @@ std::string bitvector_to_string(std::vector<bool> bitvector)
     }
     return str;
 }
+void print_bitvector(std::vector<bool> bitvector)
+{
+    for (size_t i = bitvector.size(); i > 0; i--)
+    {
+        std::cout << (bitvector[i - 1] ? '1' : '0');
+    }
+}
 
 Adapter::Adapter(SerialDevice& uart): uart(uart) { this->address = uart_tap::DEFAULT_ADDR; }
 Adapter::~Adapter() { ; }
@@ -59,6 +66,9 @@ int Adapter::tap_reset()
 int Adapter::get_ir(std::vector<bool>& ir)
 {
     ir = uint_to_bitvector(this->address, uart_tap::IR_LENGTH);
+    std::cout << "get_ir : ir = ";
+    print_bitvector(ir);
+    std::cout << std::endl;
     return 0;
 }
 int Adapter::exchange_ir(std::vector<bool>& ir)
@@ -66,7 +76,12 @@ int Adapter::exchange_ir(std::vector<bool>& ir)
     // Swap instruction register with address.
     auto temp     = uint_to_bitvector(this->address, uart_tap::IR_LENGTH);
     this->address = bitvector_to_uint(ir);
-    ir            = temp;
+    std::cout << "exchange_ir : ir_in = ";
+    print_bitvector(ir);
+    std::cout << " , ir_out = ";
+    print_bitvector(temp);
+    std::cout << std::endl;
+    ir = temp;
     return 0;
 }
 int Adapter::get_dr(std::vector<bool>& dr)
@@ -106,6 +121,9 @@ int Adapter::get_dr(std::vector<bool>& dr)
         }
     }
     dr = string_to_bitvector(response, num_bits);
+    std::cout << "get_dr : dr = ";
+    print_bitvector(dr);
+    std::cout << std::endl;
     return num_bits;
 }
 int Adapter::exchange_dr(std::vector<bool>& dr)
@@ -123,6 +141,11 @@ int Adapter::exchange_dr(std::vector<bool>& dr)
         msg[1] = uart_tap::WRITE + this->address;
         msg[2] = num_bytes;
         msg += bitvector_to_string(dr);
+        std::cout << "exchhange_dr : dr_in = ";
+        print_bitvector(dr);
+        std::cout << " , dr_out = ";
+        print_bitvector(temp);
+        std::cout << std::endl;
         dr = temp;
         return this->uart.send(msg);
     }

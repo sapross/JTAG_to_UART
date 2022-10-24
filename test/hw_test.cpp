@@ -17,7 +17,7 @@
 TEST_CASE("UART Echo Test")
 {
     // Test parameters
-    const unsigned int num_seqences    = 100;
+    const unsigned int num_seqences    = 500;
     const unsigned int sequence_length = GENERATE(1, 2, 4, 8, 16, 32);
 
     CAPTURE(num_seqences);

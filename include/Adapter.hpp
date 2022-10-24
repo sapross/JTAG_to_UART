@@ -32,6 +32,7 @@ std::vector<bool> uint_to_bitvector(uint8_t value, size_t len);
 uint8_t           bitvector_to_uint(std::vector<bool> bitvector);
 std::vector<bool> string_to_bitvector(std::string str, size_t len);
 std::string       bitvector_to_string(std::vector<bool> bitvector);
+void              print_bitvector(std::vector<bool> bitvector);
 
 class Adapter
 {

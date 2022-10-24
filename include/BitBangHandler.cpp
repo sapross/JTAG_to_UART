@@ -67,12 +67,13 @@ void BitBangHandler::threadFunc()
     while (!this->m_terminate)
     {
         std::string msg = this->readMessage();
-        std::cout << "R: " << msg << std::endl;
+        // std::cout << "R: " << msg << std::endl;
         for (auto it = msg.begin(); it != msg.end(); it++)
         {
-            auto symbol = *it;
+            char symbol = *it;
             if (symbol == 'R')
             {
+                std::cout << "S: " << this->jtag.output << std::endl;
                 this->sendMessage(this->jtag.output);
             }
             else if (symbol == 'Q')

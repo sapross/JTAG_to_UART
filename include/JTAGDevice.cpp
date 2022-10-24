@@ -3,12 +3,52 @@
 
 #include <algorithm>
 #include <iostream>
+
+bool rsh_bitvector(std::vector<bool>& bitvector, bool value)
+{
+    if (bitvector.size() > 0)
+    {
+
+        bool output = bitvector[0];
+        for (size_t i = 0; i < bitvector.size() - 1; i++)
+        {
+            bitvector[i] = bitvector[i + 1];
+        }
+        bitvector[bitvector.size() - 1] = value;
+        return output;
+    }
+    else
+    {
+        return false;
+    }
+}
+bool lsh_bitvector(std::vector<bool>& bitvector, bool value)
+{
+    if (bitvector.size() > 0)
+    {
+
+        bool output = bitvector[bitvector.size() - 1];
+        for (size_t i = bitvector.size(); i > 0; i--)
+        {
+            bitvector[i] = bitvector[i - 1];
+        }
+        bitvector[0] = value;
+        return output;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 JTAGDevice::JTAGDevice(Adapter& adapter): adapter(adapter)
 {
     this->state    = RUN_TEST_IDLE;
     this->tck_prev = false;
     this->ir       = std::vector<bool>(false, 5);
     this->output   = 0;
+    this->ir_index = 0;
+    this->dr_index = 0;
 }
 JTAGDevice::~JTAGDevice() { ; }
 
@@ -37,12 +77,13 @@ JTAG_STATES JTAGDevice::next_state(bool tms)
 }
 int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
 {
+    std::cout << "tck:" << tck << " tms:" << tms << " tdi:" << tdi << " tdo:" << this->output << std::endl;
+    static bool _tms;
     if (this->tck_prev == 0 and tck == 1)
     {
-        // //std::cout << "tck: posedge "
-        //           << " tms: " << tms << " tdi: " << tdi << std::endl;
         // Rising edge
-        this->state = this->next_state(tms);
+        // Sample tdi and tms.
+        _tms = tms;
         switch (this->state)
         {
         case TEST_LOGIC_RESET:
@@ -54,15 +95,19 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case SELECT_DR_SCAN: // std::cout << "JTAG: Select DR Scan" << std::endl;
             break;
         case CAPTURE_DR:
-            // std::cout << "JTAG: Capture DR" << std::endl;
+            std::cout << "JTAG: Capture DR" << std::endl;
             this->adapter.get_dr(this->dr);
-            this->dr_index = 0;
+            this->output = this->dr[0] ? '1' : '0';
+            // this->dr_index = 0;
             break;
         case SHIFT_DR:
-            // std::cout << "JTAG: Shift DR" << std::endl;
-            this->output             = this->dr[this->dr_index] ? '1' : '0';
-            this->dr[this->dr_index] = tdi;
-            this->dr_index           = (this->dr_index + 1) % this->dr.size();
+            std::cout << "JTAG: Shift DR. tdi " << tdi << " :";
+            print_bitvector(this->dr);
+            std::cout << std::endl;
+            rsh_bitvector(this->dr, tdi);
+            this->output = this->dr[0] ? '1' : '0';
+            // this->dr       = tdi;
+            // this->dr_index = (this->dr_index + 1) % this->dr.size();
             break;
         case EXIT1_DR: // std::cout << "JTAG: Exit1 DR" << std::endl;
             break;
@@ -71,21 +116,26 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case EXIT2_DR: // std::cout << "JTAG: Exit2 DR" << std::endl;
             break;
         case UPDATE_DR:
-            // std::cout << "JTAG: Update DR" << std::endl;
+            std::cout << "JTAG: Update DR" << std::endl;
             this->adapter.exchange_dr(this->dr);
             break;
         case SELECT_IR_SCAN: // std::cout << "JTAG: Select IR" << std::endl;
             break;
         case CAPTURE_IR:
-            // std::cout << "JTAG: Capture IR" << std::endl;
+            std::cout << "JTAG: Capture IR" << std::endl;
             this->adapter.get_ir(this->ir);
-            this->ir_index = 0;
+            this->output = this->ir[0] ? '1' : '0';
+            // this->ir_index = 0;
             break;
         case SHIFT_IR:
-            // std::cout << "JTAG: Shift IR" << std::endl;
-            this->output             = this->ir[this->ir_index] ? '1' : '0';
-            this->ir[this->ir_index] = tdi;
-            this->ir_index           = (this->ir_index + 1) % this->ir.size();
+            std::cout << "JTAG: Shift IR. tdi " << tdi << " :";
+            print_bitvector(this->ir);
+            std::cout << std::endl;
+            rsh_bitvector(this->ir, tdi);
+            this->output = this->ir[0] ? '1' : '0';
+            // this->output             = this->ir[this->ir_index] ? '1' : '0';
+            // this->ir[this->ir_index] = tdi;
+            // this->ir_index           = (this->ir_index + 1) % this->ir.size();
             break;
         case EXIT1_IR: // std::cout << "JTAG: Exit1 IR" << std::endl;
             break;
@@ -94,10 +144,15 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case EXIT2_IR: // std::cout << "JTAG: Exit2 IR" << std::endl;
             break;
         case UPDATE_IR:
-            // std::cout << "JTAG: Update IR" << std::endl;
+            std::cout << "JTAG: Update IR" << std::endl;
             this->adapter.exchange_ir(ir);
             break;
         }
+    }
+    if (this->tck_prev == 1 and tck == 0)
+    {
+        // Falling edge
+        this->state = this->next_state(_tms);
     }
 
     this->tck_prev = tck;
