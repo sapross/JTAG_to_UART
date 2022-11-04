@@ -87,7 +87,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         switch (this->state)
         {
         case TEST_LOGIC_RESET:
-            // std::cout << "JTAG: Test Logic Rest" << std::endl;
+            std::cout << "JTAG: Test Logic Rest" << std::endl;
             this->adapter.tap_reset();
             break;
         case RUN_TEST_IDLE: // std::cout << "JTAG: Run Test Idle" << std::endl;
@@ -97,7 +97,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case CAPTURE_DR:
             std::cout << "JTAG: Capture DR" << std::endl;
             this->adapter.get_dr(this->dr);
-            this->output = this->dr[0] ? '1' : '0';
+            this->output = this->dr.front() ? '1' : '0';
             // this->dr_index = 0;
             break;
         case SHIFT_DR:
@@ -105,7 +105,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
             print_bitvector(this->dr);
             std::cout << std::endl;
             rsh_bitvector(this->dr, tdi);
-            this->output = this->dr[0] ? '1' : '0';
+            this->output = this->dr.front() ? '1' : '0';
             // this->dr       = tdi;
             // this->dr_index = (this->dr_index + 1) % this->dr.size();
             break;
@@ -124,7 +124,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         case CAPTURE_IR:
             std::cout << "JTAG: Capture IR" << std::endl;
             this->adapter.get_ir(this->ir);
-            this->output = this->ir[0] ? '1' : '0';
+            this->output = this->ir.front() ? '1' : '0';
             // this->ir_index = 0;
             break;
         case SHIFT_IR:
@@ -132,7 +132,7 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
             print_bitvector(this->ir);
             std::cout << std::endl;
             rsh_bitvector(this->ir, tdi);
-            this->output = this->ir[0] ? '1' : '0';
+            this->output = this->ir.front() ? '1' : '0';
             // this->output             = this->ir[this->ir_index] ? '1' : '0';
             // this->ir[this->ir_index] = tdi;
             // this->ir_index           = (this->ir_index + 1) % this->ir.size();

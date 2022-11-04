@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(Catch2)
 
 ## set global compiler options
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -pthread")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
@@ -32,14 +32,23 @@ add_library(lib STATIC
   )
 target_include_directories(lib PUBLIC include)
 
-add_executable(test
-  test/test-main.cpp
-  test/test.cpp
-  )
+# add_executable(test
+#   test/test-main.cpp
+#   test/test.cpp
+#   )
 
-target_compile_features(test PRIVATE cxx_std_20)
-target_link_libraries(test PUBLIC lib PRIVATE Catch2::Catch2WithMain)
-target_include_directories(test PRIVATE common)
+# target_compile_features(test PRIVATE cxx_std_20)
+# target_link_libraries(test PUBLIC lib PRIVATE Catch2::Catch2WithMain)
+# target_include_directories(test PRIVATE common)
+
+# add_executable(hw_test
+#   test/hw_test-main.cpp
+#   test/hw_test.cpp
+#   )
+
+# target_compile_features(hw_test PRIVATE cxx_std_20)
+# target_link_libraries(hw_test PUBLIC lib PRIVATE Catch2::Catch2)
+# target_include_directories(hw_test PRIVATE common)
 
 add_executable(jtaguart
   src/main.cpp
@@ -50,15 +59,6 @@ target_compile_features(jtaguart PRIVATE cxx_std_20)
 target_link_libraries(jtaguart PUBLIC lib)
 target_include_directories(jtaguart PRIVATE common)
 
-
-add_executable(hw_test
-  test/hw_test-main.cpp
-  test/hw_test.cpp
-  )
-
-target_compile_features(hw_test PRIVATE cxx_std_20)
-target_link_libraries(hw_test PUBLIC lib PRIVATE Catch2::Catch2)
-target_include_directories(hw_test PRIVATE common)
 
 
 # define target linkage

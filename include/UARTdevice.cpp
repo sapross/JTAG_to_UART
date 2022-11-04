@@ -128,16 +128,16 @@ int UARTDevice::send(std::string data)
         if (not write(fd, data.c_str(), data.length()))
         {
             // writing failed
-            // std::cout << "Write error!" << std::endl;
+            std::cout << "UART: Write error!" << std::endl;
             return 1;
         }
         tcdrain(fd);
-        // std::cout << "UART S: '";
-        // for (size_t i = 0; i < data.size(); i++)
-        // {
-        //     std::cout << std::hex << +data[i] << ",";
-        // }
-        // std ::cout << "'" << std::endl;
+        std::cout << "UART: S: '";
+        for (size_t i = 0; i < data.size(); i++)
+        {
+            std::cout << std::hex << +data[i] << ",";
+        }
+        std ::cout << "'" << std::endl;
     }
     return 0;
 }
@@ -146,22 +146,22 @@ std::string UARTDevice::receive(size_t num_bytes)
 {
     char        buf;
     std::string data;
-    // std::cout << "UART R: '";
+    std::cout << "UART: R:  '";
     for (size_t total = 0; total < num_bytes;)
     {
         size_t result = read(fd, &buf, 1);
         if (result)
         {
-            // std::cout << std::hex << +buf << ",";
+            std::cout << std::hex << +buf << ",";
             data.push_back(buf);
             total++;
         }
         else
         {
-            // std::cout << "Read error!" << std::endl;
+            std::cout << "UART: Read error!" << std::endl;
             break;
         }
     }
-    // std ::cout << "'" << std::endl;
+    std ::cout << "'" << std::endl;
     return data;
 }

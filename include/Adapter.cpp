@@ -58,6 +58,7 @@ Adapter::~Adapter() { ; }
 
 int Adapter::tap_reset()
 {
+    this->address = uart_tap::DEFAULT_ADDR;
     std::string msg(3, 0);
     msg[0] = uart_tap::HEADER;
     msg[1] = uart_tap::RESET;

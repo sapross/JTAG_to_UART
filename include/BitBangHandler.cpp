@@ -25,18 +25,16 @@ void BitBangHandler::stop()
     }
 }
 
-std::string BitBangHandler::readMessage()
+int BitBangHandler::readMessage(std::string& msg_buffer)
 {
-    std::string msg(1024, '\0'); // buffor with 1024 length which is filled with NULL character
 
-    int readBytes = recv(this->fd, msg.data(), msg.size(), 0);
+    int readBytes = recv(this->fd, msg_buffer.data(), msg_buffer.size(), 0);
     if (readBytes < 1)
     {
         std::cout << "Error in readMessage, readBytes: " << readBytes << std::endl;
-        return "";
     }
 
-    return msg;
+    return readBytes;
 }
 
 void BitBangHandler::sendMessage(const std::string& msg)
@@ -66,41 +64,50 @@ void BitBangHandler::threadFunc()
 {
     while (!this->m_terminate)
     {
-        std::string msg = this->readMessage();
-        // std::cout << "R: " << msg << std::endl;
-        for (auto it = msg.begin(); it != msg.end(); it++)
+        std::string msg_buffer(1024, '\0'); // buffer with 1024 length which is filled with NULL character
+                                            //
+        int num_bytes = this->readMessage(msg_buffer);
+        if (num_bytes < 0)
         {
-            char symbol = *it;
-            if (symbol == 'R')
+            this->terminate();
+        }
+        else
+        {
+            // std::cout << "R: " << msg << std::endl;
+            for (size_t i = 0; i < num_bytes; i++)
             {
-                std::cout << "S: " << this->jtag.output << std::endl;
-                this->sendMessage(this->jtag.output);
-            }
-            else if (symbol == 'Q')
-            {
-                this->terminate();
-            }
-            else
-            {
-                switch (symbol)
+                char symbol = msg_buffer[i];
+                if (symbol == 'R')
                 {
-                case 'B': break;
-                case 'b': break;
-                case 'R': break;
-                case 'Q': break;
-                case '0': this->jtag.proc_input(false, false, false); break;
-                case '1': this->jtag.proc_input(false, false, true); break;
-                case '2': this->jtag.proc_input(false, true, false); break;
-                case '3': this->jtag.proc_input(false, true, true); break;
-                case '4': this->jtag.proc_input(true, false, false); break;
-                case '5': this->jtag.proc_input(true, false, true); break;
-                case '6': this->jtag.proc_input(true, true, false); break;
-                case '7': this->jtag.proc_input(true, true, true); break;
-                case 'r': break;
-                case 's': break;
-                case 't': break;
-                case 'u': break;
-                default: break;
+                    std::cout << "S: " << this->jtag.output << std::endl;
+                    this->sendMessage(this->jtag.output);
+                }
+                else if (symbol == 'Q')
+                {
+                    this->terminate();
+                }
+                else
+                {
+                    switch (symbol)
+                    {
+                    case 'B': break;
+                    case 'b': break;
+                    case 'R': break;
+                    case 'Q': break;
+                    case '0': this->jtag.proc_input(false, false, false); break;
+                    case '1': this->jtag.proc_input(false, false, true); break;
+                    case '2': this->jtag.proc_input(false, true, false); break;
+                    case '3': this->jtag.proc_input(false, true, true); break;
+                    case '4': this->jtag.proc_input(true, false, false); break;
+                    case '5': this->jtag.proc_input(true, false, true); break;
+                    case '6': this->jtag.proc_input(true, true, false); break;
+                    case '7': this->jtag.proc_input(true, true, true); break;
+                    case 'r': break;
+                    case 's': break;
+                    case 't': break;
+                    case 'u': break;
+                    default: break;
+                    }
                 }
             }
         }

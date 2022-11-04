@@ -11,9 +11,9 @@ class BitBangHandler
     int         fd          = -1;
     bool        m_terminate = false;
 
-    std::string readMessage();
-    void        sendMessage(const std::string& msg);
-    void        sendMessage(const uint8_t msg);
+    int  readMessage(std::string& msg_buffer);
+    void sendMessage(const std::string& msg);
+    void sendMessage(const uint8_t msg);
 
     JTAGDevice& jtag;
 
