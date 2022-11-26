@@ -27,21 +27,35 @@ uint8_t bitvector_to_uint(std::vector<bool> bitvector)
 std::vector<bool> string_to_bitvector(std::string str, size_t len)
 {
     std::vector<bool> bitvector(len, false);
-    for (size_t i = 0; i < bitvector.size(); i++)
+    // OpenOCD processes data in little endian, while TAP communicates in big endian.
+    // Hence, process bytes in reverse.
+    auto it = str.begin();
+    for (size_t j = 0; j < len; j++)
     {
-        // Convert address to bool vector.
-        bitvector[i] = (1 << i % 8) & str[i / 8];
+        char c;
+        if (j % 8 == 0)
+        {
+            c = *it;
+            it++;
+        }
+        bitvector[j] = (1 << j % 8) & c;
     }
+
     return bitvector;
 }
 
 std::string bitvector_to_string(std::vector<bool> bitvector)
 {
     std::string str((bitvector.size() + 7) / 8, 0);
+    // Convert endianness between TAP and OpenOCD
+    auto it = str.begin();
     for (size_t i = 0; i < bitvector.size(); i++)
     {
-        // Convert address to bool vector.
-        str[i / 8] += (1 << i % 8) * bitvector[i];
+        if (i > 0 && i % 8 == 0)
+        {
+            it++;
+        }
+        *it += (1 << i % 8) * bitvector[i];
     }
     return str;
 }
@@ -141,7 +155,7 @@ int Adapter::exchange_dr(std::vector<bool>& dr)
         msg[0] = uart_tap::HEADER;
         msg[1] = uart_tap::WRITE + this->address;
         msg[2] = num_bytes;
-        msg += bitvector_to_string(dr);
+        msg.append(bitvector_to_string(dr));
         std::cout << "exchhange_dr : dr_in = ";
         print_bitvector(dr);
         std::cout << " , dr_out = ";
