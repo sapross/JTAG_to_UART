@@ -7,6 +7,7 @@
 #include <pty.h>
 #include <random>
 #include <sstream>
+#include <strings.h>
 #include <termios.h>
 
 #include "Adapter.hpp"
@@ -19,10 +20,18 @@ TEST_CASE("UARTDevice Tests")
     std::uniform_int_distribution<int> distribution(32, 126);
     auto                               randnum = std::bind(distribution, generator);
 
-    int            master, slave;
-    char           buf[256];
-    struct termios tty;
-    auto           serint = openpty(&master, &slave, buf, &tty, nullptr);
+    int  master, slave;
+    char buf[256];
+
+    unsigned int   bdcode = get_baudrate(115200);
+    struct termios config;
+    bzero(&config, sizeof(config));
+    cfmakeraw(&config);
+    config.c_cflag |= bdcode;
+    // Read will return immediatly, whether data is available or not.
+    config.c_cc[VMIN]  = 0;
+    config.c_cc[VTIME] = 0;
+    auto serint        = openpty(&master, &slave, buf, &config, nullptr);
 
     UARTDevice uart(buf, 115200);
 
