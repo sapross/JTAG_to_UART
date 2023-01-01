@@ -27,7 +27,7 @@ TEST_CASE("UART Echo Test")
     std::uniform_int_distribution<int> distribution(32, 126);
     auto                               randnum = std::bind(distribution, generator);
 
-    UARTDevice uart(tty, baudrate);
+    UARTDevice uart(tty, baudrate, true);
 
     std::string ref(sequence_length, 0);
     std::string res(sequence_length, 0);

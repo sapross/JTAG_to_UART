@@ -31,7 +31,7 @@ int BitBangHandler::readMessage(std::string& msg_buffer)
     int readBytes = recv(this->fd, msg_buffer.data(), msg_buffer.size(), 0);
     if (readBytes < 1)
     {
-        std::cout << "Error in readMessage, readBytes: " << readBytes << std::endl;
+        std::cerr << "Error in readMessage, readBytes: " << readBytes << std::endl;
     }
 
     return readBytes;
@@ -42,7 +42,7 @@ void BitBangHandler::sendMessage(const std::string& msg)
     int n = send(this->fd, msg.c_str(), msg.size(), 0);
     if (n != static_cast<int>(msg.size()))
     {
-        std::cout << "Error while sending message, message size: " << msg.size() << " bytes sent: " << std::endl;
+        std::cerr << "Error while sending message, message size: " << msg.size() << " bytes sent: " << std::endl;
     }
 }
 
@@ -54,7 +54,7 @@ void BitBangHandler::sendMessage(const uint8_t msg)
     int n  = send(this->fd, buf, 1, 0);
     if (n != 1)
     {
-        std::cout << "Error while sending message, message: " << std::hex << +msg << " bytes sent: " << std::endl;
+        std::cerr << "Error while sending message, message: " << std::hex << +msg << " bytes sent: " << std::endl;
     }
 }
 
@@ -79,7 +79,7 @@ void BitBangHandler::threadFunc()
                 char symbol = msg_buffer[i];
                 if (symbol == 'R')
                 {
-                    std::cout << "S: " << this->jtag.output << std::endl;
+                    // std::cout << "S: " << this->jtag.output << std::endl;
                     this->sendMessage(this->jtag.output);
                 }
                 else if (symbol == 'Q')

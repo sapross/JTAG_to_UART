@@ -14,9 +14,10 @@
 
 #define PORT 4567
 
-TCPServer::TCPServer(JTAGDevice& jtag): jtag(jtag)
+TCPServer::TCPServer(JTAGDevice& jtag, bool debug): jtag(jtag)
 {
-    this->fd = -1;
+    this->debug = debug;
+    this->fd    = -1;
     this->start();
 }
 

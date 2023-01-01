@@ -19,8 +19,9 @@ class UARTDevice: public SerialDevice
     struct termios prev_config;
 
   public:
-    int fd;
-    UARTDevice(std::string term, int baudrate);
+    int  fd;
+    bool debug;
+    UARTDevice(std::string term, int baudrate, bool debug);
     ~UARTDevice();
     int         send(std::string data);
     std::string receive(size_t num_bytes);

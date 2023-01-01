@@ -32,17 +32,19 @@ std::vector<bool> uint_to_bitvector(uint8_t value, size_t len);
 uint8_t           bitvector_to_uint(std::vector<bool> bitvector);
 std::vector<bool> string_to_bitvector(std::string str, size_t len);
 std::string       bitvector_to_string(std::vector<bool> bitvector);
+std::string       bitvector_to_string(std::vector<bool>::iterator begin, std::vector<bool>::iterator end);
 void              print_bitvector(std::vector<bool> bitvector);
 
 class Adapter
 {
   private:
     SerialDevice& uart;
+    void          print_data_as_reg(std::vector<bool> ir);
 
   public:
     uint8_t address;
-
-    Adapter(SerialDevice& uart);
+    bool    debug;
+    Adapter(SerialDevice& uart, bool debug);
     ~Adapter();
     int tap_reset();
     int get_ir(std::vector<bool>& ir);

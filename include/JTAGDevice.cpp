@@ -41,8 +41,9 @@ bool lsh_bitvector(std::vector<bool>& bitvector, bool value)
     }
 }
 
-JTAGDevice::JTAGDevice(Adapter& adapter): adapter(adapter)
+JTAGDevice::JTAGDevice(Adapter& adapter, bool debug): adapter(adapter)
 {
+    this->debug    = debug;
     this->state    = RUN_TEST_IDLE;
     this->tck_prev = false;
     this->ir       = std::vector<bool>(false, 5);
@@ -77,7 +78,7 @@ JTAG_STATES JTAGDevice::next_state(bool tms)
 }
 int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
 {
-    std::cout << "tck:" << tck << " tms:" << tms << " tdi:" << tdi << " tdo:" << this->output << std::endl;
+    // std::cout << "tck:" << tck << " tms:" << tms << " tdi:" << tdi << " tdo:" << this->output << std::endl;
     static bool _tms;
     if (this->tck_prev == 0 and tck == 1)
     {
@@ -87,64 +88,118 @@ int JTAGDevice::proc_input(bool tck, bool tms, bool tdi)
         switch (this->state)
         {
         case TEST_LOGIC_RESET:
-            std::cout << "JTAG: Test Logic Rest" << std::endl;
+            if (this->debug)
+            {
+                std::cout << "JTAG: Test Logic Rest" << std::endl;
+            }
             this->adapter.tap_reset();
             break;
-        case RUN_TEST_IDLE: // std::cout << "JTAG: Run Test Idle" << std::endl;
+        case RUN_TEST_IDLE:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Run Test Idle" << std::endl;
+            }
             break;
-        case SELECT_DR_SCAN: // std::cout << "JTAG: Select DR Scan" << std::endl;
+        case SELECT_DR_SCAN:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Select DR Scan" << std::endl;
+            }
             break;
         case CAPTURE_DR:
-            std::cout << "JTAG: Capture DR" << std::endl;
+            if (this->debug)
+            {
+                std::cout << "JTAG: Capture DR" << std::endl;
+            }
             this->adapter.get_dr(this->dr);
             this->output = this->dr.front() ? '1' : '0';
             // this->dr_index = 0;
             break;
         case SHIFT_DR:
-            std::cout << "JTAG: Shift DR. tdi " << tdi << " :";
-            print_bitvector(this->dr);
-            std::cout << std::endl;
+            if (this->debug)
+            {
+                std::cout << "JTAG: Shift DR. tdi " << tdi << " :";
+                print_bitvector(this->dr);
+                std::cout << std::endl;
+            }
             rsh_bitvector(this->dr, tdi);
             this->output = this->dr.front() ? '1' : '0';
             // this->dr       = tdi;
             // this->dr_index = (this->dr_index + 1) % this->dr.size();
             break;
-        case EXIT1_DR: // std::cout << "JTAG: Exit1 DR" << std::endl;
+        case EXIT1_DR:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Exit1 DR" << std::endl;
+            }
             break;
-        case PAUSE_DR: // std::cout << "JTAG: Pause DR" << std::endl;
+        case PAUSE_DR:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Pause DR" << std::endl;
+            }
             break;
-        case EXIT2_DR: // std::cout << "JTAG: Exit2 DR" << std::endl;
+        case EXIT2_DR:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Exit2 DR" << std::endl;
+            }
             break;
         case UPDATE_DR:
-            std::cout << "JTAG: Update DR" << std::endl;
+            if (this->debug)
+            {
+                std::cout << "JTAG: Update DR" << std::endl;
+            }
             this->adapter.exchange_dr(this->dr);
             break;
-        case SELECT_IR_SCAN: // std::cout << "JTAG: Select IR" << std::endl;
+        case SELECT_IR_SCAN:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Select IR" << std::endl;
+            }
             break;
         case CAPTURE_IR:
-            std::cout << "JTAG: Capture IR" << std::endl;
+            if (this->debug)
+            {
+                std::cout << "JTAG: Capture IR" << std::endl;
+            }
             this->adapter.get_ir(this->ir);
             this->output = this->ir.front() ? '1' : '0';
             // this->ir_index = 0;
             break;
         case SHIFT_IR:
-            std::cout << "JTAG: Shift IR. tdi " << tdi << " :";
-            print_bitvector(this->ir);
-            std::cout << std::endl;
+            if (this->debug)
+            {
+                std::cout << "JTAG: Shift IR. tdi " << tdi << " :";
+                print_bitvector(this->ir);
+                std::cout << std::endl;
+            }
             rsh_bitvector(this->ir, tdi);
             this->output = this->ir.front() ? '1' : '0';
-            // this->output             = this->ir[this->ir_index] ? '1' : '0';
-            // this->ir[this->ir_index] = tdi;
-            // this->ir_index           = (this->ir_index + 1) % this->ir.size();
             break;
-        case EXIT1_IR: // std::cout << "JTAG: Exit1 IR" << std::endl;
+        case EXIT1_IR:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Exit1 IR" << std::endl;
+            }
             break;
-        case PAUSE_IR: // std::cout << "JTAG: Pause IR" << std::endl;
+        case PAUSE_IR:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Pause IR" << std::endl;
+            }
             break;
-        case EXIT2_IR: // std::cout << "JTAG: Exit2 IR" << std::endl;
+        case EXIT2_IR:
+            if (this->debug)
+            {
+                std::cout << "JTAG: Exit2 IR" << std::endl;
+            }
             break;
         case UPDATE_IR:
-            std::cout << "JTAG: Update IR" << std::endl;
+            if (this->debug)
+            {
+                std::cout << "JTAG: Update IR" << std::endl;
+            }
             this->adapter.exchange_ir(ir);
             break;
         }

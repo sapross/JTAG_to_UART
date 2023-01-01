@@ -47,7 +47,8 @@ class JTAGDevice
 
   public:
     uint8_t output;
-    JTAGDevice(Adapter& adapter);
+    bool    debug;
+    JTAGDevice(Adapter& adapter, bool debug);
     ~JTAGDevice();
     int         proc_input(bool tck, bool tms, bool tdi);
     std::string encode_output();

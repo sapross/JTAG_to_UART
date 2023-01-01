@@ -6,10 +6,11 @@
 class TCPServer
 {
   public:
+    bool debug;
     void start();
     void stop();
     void join();
-    TCPServer(JTAGDevice& jtag);
+    TCPServer(JTAGDevice& jtag, bool debug);
     ~TCPServer();
 
   private:

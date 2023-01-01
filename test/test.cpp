@@ -33,7 +33,7 @@ TEST_CASE("UARTDevice Tests")
     config.c_cc[VTIME] = 0;
     auto serint        = openpty(&master, &slave, buf, &config, nullptr);
 
-    UARTDevice uart(buf, 115200);
+    UARTDevice uart(buf, 115200, true);
 
     // Tests
     SECTION("Send Message")
@@ -98,7 +98,7 @@ TEST_CASE("Adapter Tests")
     auto                               randnum = std::bind(distribution, generator);
 
     DummyUART uart;
-    Adapter   adapter(uart);
+    Adapter   adapter(uart, true);
     // Tests
     SECTION("Adapter Reset")
     {

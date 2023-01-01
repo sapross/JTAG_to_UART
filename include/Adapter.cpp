@@ -1,6 +1,72 @@
 #include "Adapter.hpp"
 
+#include <iomanip>
 #include <iostream>
+
+// Helper function to get correct output through std:hex;
+unsigned int to_uint(char val) { return (unsigned int)((uint8_t)(val)); }
+
+void Adapter::print_data_as_reg(std::vector<bool> dr)
+{
+
+    switch (this->address)
+    {
+    case uart_tap::DMI_ADDR:
+    {
+        // Acquire fields.
+        auto        start = dr.begin();
+        std::string op    = bitvector_to_string(start, start + 2);
+        start += 2;
+        std::string data = bitvector_to_string(start, start + 32);
+        start += 32;
+        std::string address = bitvector_to_string(start, start + 7);
+        start += 7;
+        std::cout << "DMI: ";
+        // Print fields
+        std::cout << "addr=" << std::setw(2) << std::setfill('0') << std::hex << to_uint(address[0]);
+        std::cout << ", ";
+        std::cout << "op=" << std::setw(2) << std::setfill('0') << std::hex << to_uint(op[0]) << ", ";
+        std::cout << "data=";
+        for (auto i = data.size(); i > 0; i--)
+        {
+            std::cout << std::setw(2) << std::setfill('0') << std::hex << to_uint(data[i - 1]);
+        }
+        break;
+    }
+    case uart_tap::DEFAULT_ADDR:
+    {
+        std::string val = bitvector_to_string(dr);
+        std::cout << "IDCODE=";
+        for (auto i = val.size(); i > 0; i--)
+        {
+            std::cout << std::setw(2) << std::setfill('0') << std::hex << to_uint(val[i - 1]);
+        }
+        break;
+    }
+    case uart_tap::DTMCS_ADDR:
+    {
+        std::string val = bitvector_to_string(dr);
+        std::cout << "DTMCS=";
+        for (auto i = val.size(); i > 0; i--)
+        {
+            std::cout << std::setw(2) << std::setfill('0') << std::hex << to_uint(val[i - 1]);
+        }
+        break;
+    }
+    default:
+    {
+        // Register at default address is 32 bit.
+        std::string val = bitvector_to_string(dr);
+        std::cout << "BYPASS=";
+        for (auto i = val.size(); i > 0; i--)
+        {
+            std::cout << std::setw(2) << std::setfill('0') << std::hex << to_uint(val[i - 1]);
+        }
+        break;
+    }
+    }
+    std::cout << std::endl;
+}
 
 std::vector<bool> uint_to_bitvector(uint8_t value, size_t len)
 {
@@ -59,6 +125,22 @@ std::string bitvector_to_string(std::vector<bool> bitvector)
     }
     return str;
 }
+std::string bitvector_to_string(std::vector<bool>::iterator begin, std::vector<bool>::iterator end)
+{
+    auto        size = end - begin;
+    std::string str((size + 7) / 8, 0);
+    // Convert endianness between TAP and OpenOCD
+    auto it = str.begin();
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i > 0 && i % 8 == 0)
+        {
+            it++;
+        }
+        *it += (1 << i % 8) * (*(begin + i));
+    }
+    return str;
+}
 void print_bitvector(std::vector<bool> bitvector)
 {
     for (size_t i = bitvector.size(); i > 0; i--)
@@ -67,7 +149,7 @@ void print_bitvector(std::vector<bool> bitvector)
     }
 }
 
-Adapter::Adapter(SerialDevice& uart): uart(uart) { this->address = uart_tap::DEFAULT_ADDR; }
+Adapter::Adapter(SerialDevice& uart, bool debug): uart(uart), debug(debug) { this->address = uart_tap::DEFAULT_ADDR; }
 Adapter::~Adapter() { ; }
 
 int Adapter::tap_reset()
@@ -81,9 +163,9 @@ int Adapter::tap_reset()
 int Adapter::get_ir(std::vector<bool>& ir)
 {
     ir = uint_to_bitvector(this->address, uart_tap::IR_LENGTH);
-    std::cout << "get_ir : ir = ";
-    print_bitvector(ir);
-    std::cout << std::endl;
+    // std::cout << "get_ir : ir = ";
+    // print_bitvector(ir);
+    // std::cout << std::endl;
     return 0;
 }
 int Adapter::exchange_ir(std::vector<bool>& ir)
@@ -91,11 +173,11 @@ int Adapter::exchange_ir(std::vector<bool>& ir)
     // Swap instruction register with address.
     auto temp     = uint_to_bitvector(this->address, uart_tap::IR_LENGTH);
     this->address = bitvector_to_uint(ir);
-    std::cout << "exchange_ir : ir_in = ";
-    print_bitvector(ir);
-    std::cout << " , ir_out = ";
-    print_bitvector(temp);
-    std::cout << std::endl;
+    // std::cout << "exchange_ir : ir_in = ";
+    // print_bitvector(ir);
+    // std::cout << " , ir_out = ";
+    // print_bitvector(temp);
+    // std::cout << std::endl;
     ir = temp;
     return 0;
 }
@@ -136,9 +218,9 @@ int Adapter::get_dr(std::vector<bool>& dr)
         }
     }
     dr = string_to_bitvector(response, num_bits);
-    std::cout << "get_dr : dr = ";
-    print_bitvector(dr);
-    std::cout << std::endl;
+    // std::cout << "get_dr : dr = ";
+    // print_bitvector(dr);
+    // std::cout << std::endl;
     return num_bits;
 }
 int Adapter::exchange_dr(std::vector<bool>& dr)
@@ -156,11 +238,15 @@ int Adapter::exchange_dr(std::vector<bool>& dr)
         msg[1] = uart_tap::WRITE + this->address;
         msg[2] = num_bytes;
         msg.append(bitvector_to_string(dr));
-        std::cout << "exchhange_dr : dr_in = ";
-        print_bitvector(dr);
-        std::cout << " , dr_out = ";
-        print_bitvector(temp);
-        std::cout << std::endl;
+        if (this->debug)
+        {
+            print_data_as_reg(dr);
+            std::cout << "exchhange_dr : dr_in = ";
+            print_bitvector(dr);
+            std::cout << " , dr_out = ";
+            print_bitvector(temp);
+            std::cout << std::endl;
+        }
         dr = temp;
         return this->uart.send(msg);
     }
