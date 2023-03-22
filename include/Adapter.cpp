@@ -141,6 +141,32 @@ std::string bitvector_to_string(std::vector<bool>::iterator begin, std::vector<b
     }
     return str;
 }
+std::string insert_escape(std::string data)
+{
+    auto len = data.size();
+    for (size_t i = 0; i < data.size(); i++)
+    {
+        if ((uint8_t)data[i] == uart_tap::ESCAPE)
+        {
+            len++;
+        }
+    }
+    std::string new_data(len, 0);
+    auto        it = data.begin();
+    for (size_t i = 0; i < len;)
+    {
+        new_data[i] = *it;
+        if ((uint8_t)*it == uart_tap::ESCAPE)
+        {
+            new_data[i + 1] = uart_tap::ESCAPE;
+            i++;
+        }
+        i++;
+        it++;
+    }
+    return new_data;
+}
+
 void print_bitvector(std::vector<bool> bitvector)
 {
     for (size_t i = bitvector.size(); i > 0; i--)
@@ -156,7 +182,7 @@ int Adapter::tap_reset()
 {
     this->address = uart_tap::DEFAULT_ADDR;
     std::string msg(3, 0);
-    msg[0] = uart_tap::HEADER;
+    msg[0] = uart_tap::ESCAPE;
     msg[1] = uart_tap::RESET;
     return uart.send(msg);
 }
@@ -184,8 +210,8 @@ int Adapter::exchange_ir(std::vector<bool>& ir)
 int Adapter::get_dr(std::vector<bool>& dr)
 {
 
-    std::string msg(3, 0);
-    msg[0] = uart_tap::HEADER;
+    std::string msg(2, 0);
+    msg[0] = uart_tap::ESCAPE;
     msg[1] = uart_tap::READ + this->address;
 
     size_t num_bits;
@@ -194,30 +220,43 @@ int Adapter::get_dr(std::vector<bool>& dr)
     case uart_tap::DEFAULT_ADDR: num_bits = uart_tap::IDCODE_LENGTH; break;
     case uart_tap::DTMCS_ADDR: num_bits = uart_tap::DTMCS_LENGTH; break;
     case uart_tap::DMI_ADDR: num_bits = uart_tap::DMI_LENGTH; break;
+    case uart_tap::STB0_CS_ADDR: num_bits = uart_tap::STB0_CS_LENGTH; break;
+    case uart_tap::STB0_D_ADDR: num_bits = uart_tap::STB0_D_LENGTH; break;
+    case uart_tap::STB1_CS_ADDR: num_bits = uart_tap::STB1_CS_LENGTH; break;
+    case uart_tap::STB1_D_ADDR: num_bits = uart_tap::STB1_D_LENGTH; break;
     default:
         // Otherwise we've hit a bypass register and read a zero byte.
         num_bits = 8;
         break;
     }
     size_t num_bytes = (num_bits + 7) / 8;
-    msg[2]           = num_bytes;
     // std::cout << "BitsBytes: " << num_bits << " " << num_bytes << std::endl;
-    std::string response;
-    size_t      num_attempts = 0;
+    std::string response = "";
+    uart.send(msg);
+    std::string word = "";
     while (response.size() != num_bytes)
     {
-        if (num_attempts < 3)
+        word = uart.receive(1);
+        // Filter escape sequence and ignore instructions.
+        // std::cout << word << std::endl;
+        if ((uint8_t)(word[0]) == uart_tap::ESCAPE)
         {
-
-            uart.send(msg);
-            response = uart.receive(num_bytes);
+            word = uart.receive(1);
+            if ((uint8_t)(word[0]) == uart_tap::ESCAPE)
+            {
+                response += word;
+            }
         }
         else
         {
-            return -1;
+            response += word;
         }
     }
     dr = string_to_bitvector(response, num_bits);
+    if (this->debug)
+    {
+        print_data_as_reg(dr);
+    }
     // std::cout << "get_dr : dr = ";
     // print_bitvector(dr);
     // std::cout << std::endl;
@@ -233,11 +272,11 @@ int Adapter::exchange_dr(std::vector<bool>& dr)
     if (dr.size() > 0)
     {
         size_t      num_bytes = (temp.size() + 7) / 8;
-        std::string msg(3, 0);
-        msg[0] = uart_tap::HEADER;
-        msg[1] = uart_tap::WRITE + this->address;
-        msg[2] = num_bytes;
-        msg.append(bitvector_to_string(dr));
+        std::string msg(2, 0);
+        msg[0]           = uart_tap::ESCAPE;
+        msg[1]           = uart_tap::WRITE + this->address;
+        std::string data = insert_escape(bitvector_to_string(dr));
+        msg.append(data);
         if (this->debug)
         {
             print_data_as_reg(dr);
