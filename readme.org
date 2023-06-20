@@ -1,0 +1,13 @@
+* JTAG_to_UART
+
+Translation layer to convert OpenOCD's Remote-Bitbang transport of JTAG to a protocol used by the UART-Debug-Module-Interface.
+
+Build using:
+#+begin_src sh
+cmake . -B build; cmake --build build
+#+end_src
+And run using:
+#+begin_src sh
+./build/jtaguart -t /dev/ttyUSB0 -b 3000000 -d 1
+#+end_src
+where -t specifies the terminal device, -b the baudrate and -d enableing debug symbols.
