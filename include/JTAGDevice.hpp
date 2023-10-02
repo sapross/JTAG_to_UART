@@ -1,6 +1,7 @@
 #ifndef JTAGDEVICE_H_
 #define JTAGDEVICE_H_
 
+#include <cstdint>
 #include <string>
 #include <termios.h>
 #include <vector>

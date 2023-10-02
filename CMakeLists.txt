@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project(PAD01_SCAN LANGUAGES CXX) 
+project(JTAG-TO-UART LANGUAGES CXX)
 
 ## Get external content
 include(FetchContent)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG       v3.1.1
+  GIT_TAG       v3.4.0
   )
 FetchContent_MakeAvailable(Catch2)
 
@@ -20,7 +20,7 @@ FetchContent_MakeAvailable(Lyra)
 
 ## set global compiler options
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 

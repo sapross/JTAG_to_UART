@@ -1,6 +1,7 @@
 #ifndef UARTDEVICE_H_
 #define UARTDEVICE_H_
 
+#include <cstdint>
 #include <string>
 #include <termios.h>
 

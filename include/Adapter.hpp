@@ -1,5 +1,6 @@
 #ifndef ADAPTER_H_
 #define ADAPTER_H_
+#include <cstdint>
 #include <vector>
 
 #include "UARTdevice.hpp"

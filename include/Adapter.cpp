@@ -25,7 +25,25 @@ void Adapter::print_data_as_reg(std::vector<bool> dr)
         // Print fields
         std::cout << "addr=" << std::setw(2) << std::setfill('0') << std::hex << to_uint(address[0]);
         std::cout << ", ";
-        std::cout << "op=" << std::setw(2) << std::setfill('0') << std::hex << to_uint(op[0]) << ", ";
+
+        std::cout << "op=";
+        if (to_uint(op[0]) == 0)
+        {
+            std::cout << "NOP  ";
+        }
+        else if (to_uint(op[0]) == 1)
+        {
+            std::cout << "READ ";
+        }
+        else if (to_uint(op[0]) == 2)
+        {
+            std::cout << "WRITE";
+        }
+        else
+        {
+            std::cout << "RES   ";
+        }
+        std::cout << ", ";
         std::cout << "data=";
         for (auto i = data.size(); i > 0; i--)
         {
@@ -65,7 +83,6 @@ void Adapter::print_data_as_reg(std::vector<bool> dr)
         break;
     }
     }
-    std::cout << std::endl;
 }
 
 std::vector<bool> uint_to_bitvector(uint8_t value, size_t len)
@@ -88,6 +105,15 @@ uint8_t bitvector_to_uint(std::vector<bool> bitvector)
         value += (1 << i) * bitvector[i];
     }
     return value;
+}
+
+void print_bitvector_strhex(std::vector<bool> bitvector)
+{
+    std::string val = bitvector_to_string(bitvector);
+    for (auto i = val.size(); i > 0; i--)
+    {
+        std::cout << std::setw(2) << std::setfill('0') << std::hex << to_uint(val[i - 1]);
+    }
 }
 
 std::vector<bool> string_to_bitvector(std::string str, size_t len)
@@ -181,10 +207,16 @@ Adapter::~Adapter() { ; }
 int Adapter::tap_reset()
 {
     this->address = uart_tap::DEFAULT_ADDR;
-    std::string msg(3, 0);
+    std::string msg(2, 0);
     msg[0] = uart_tap::ESCAPE;
     msg[1] = uart_tap::RESET;
-    return uart.send(msg);
+    uart.send(msg);
+    msg = uart.receive(2);
+    if (msg[0] == (char)(uart_tap::ESCAPE) and msg[1] == (char)(uart_tap::DEFAULT_ADDR))
+    {
+        return 0;
+    }
+    return 1;
 }
 int Adapter::get_ir(std::vector<bool>& ir)
 {
@@ -255,7 +287,11 @@ int Adapter::get_dr(std::vector<bool>& dr)
     dr = string_to_bitvector(response, num_bits);
     if (this->debug)
     {
+        std::cout << "get_dr = ";
         print_data_as_reg(dr);
+        std::cout << ", raw = ";
+        print_bitvector_strhex(dr);
+        std::cout << std::endl;
     }
     // std::cout << "get_dr : dr = ";
     // print_bitvector(dr);
@@ -279,11 +315,10 @@ int Adapter::exchange_dr(std::vector<bool>& dr)
         msg.append(data);
         if (this->debug)
         {
+            std::cout << "put_dr = ";
             print_data_as_reg(dr);
-            std::cout << "exchhange_dr : dr_in = ";
-            print_bitvector(dr);
-            std::cout << " , dr_out = ";
-            print_bitvector(temp);
+            std::cout << ", raw = ";
+            print_bitvector_strhex(dr);
             std::cout << std::endl;
         }
         dr = temp;
